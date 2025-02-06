@@ -2,8 +2,10 @@ trigger:
   branches:
     include:
     - main
+
 pool:
   vmImage: 'ubuntu-latest'
+
 stages:
 - stage: Build
   displayName: 'Build Stage'
@@ -15,6 +17,7 @@ stages:
       inputs:
         versionSpec: '20.x'
       displayName: 'Install Node.js'
+
     - task: CmdLine@2
       displayName: 'npm install, build, and test'
       inputs:
@@ -22,11 +25,21 @@ stages:
           npm install
           npm run build --if-present
           npm run test --if-present
+
     - task: CmdLine@2
       displayName: 'Zip artifact for deployment'
       inputs:
         script: |
-          zip -r release.zip ./*
+          mkdir -p $(Build.ArtifactStagingDirectory)
+          zip -r $(Build.ArtifactStagingDirectory)/release.zip ./*
+
+    - task: CmdLine@2
+      displayName: 'Verify artifact creation'
+      inputs:
+        script: |
+          echo "Listing contents of $(Build.ArtifactStagingDirectory):"
+          ls -la $(Build.ArtifactStagingDirectory)
+
     - task: PublishBuildArtifacts@1
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
@@ -41,6 +54,16 @@ stages:
   - job: Deploy
     displayName: 'Deploy to Azure Web App'
     steps:
+    - download: current
+      artifact: node-app
+
+    - task: CmdLine@2
+      displayName: 'Verify downloaded artifact'
+      inputs:
+        script: |
+          echo "Listing downloaded artifacts:"
+          ls -la $(Pipeline.Workspace)/node-app
+
     - task: AzureRmWebAppDeployment@4
       displayName: 'Deploy to Azure Web App'
       inputs:
@@ -48,4 +71,4 @@ stages:
         azureSubscription: 'Sparc-Azure'
         appType: 'webAppLinux'
         WebAppName: 'app-sparc-dev-wus-002'
-        packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+        packageForLinux: '$(Pipeline.Workspace)/node-app/release.zip'
