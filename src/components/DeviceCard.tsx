@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -12,10 +14,21 @@ interface DeviceCardProps {
   deviceId: string;
   isActive: boolean;
   status: string;
+  url?: string;
   onToggleActive: () => void;
+  onUpdateUrl: (url: string) => void;
 }
 
-const DeviceCard = ({ deviceId, isActive, status, onToggleActive }: DeviceCardProps) => {
+const DeviceCard = ({ 
+  deviceId, 
+  isActive, 
+  status, 
+  url = '', 
+  onToggleActive, 
+  onUpdateUrl 
+}: DeviceCardProps) => {
+  const [urlInput, setUrlInput] = useState(url);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'online':
@@ -44,7 +57,20 @@ const DeviceCard = ({ deviceId, isActive, status, onToggleActive }: DeviceCardPr
           Status: {isActive ? 'Active' : 'Inactive'}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Enter URL"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+          />
+          <Button 
+            onClick={() => onUpdateUrl(urlInput)}
+            variant="outline"
+          >
+            Set
+          </Button>
+        </div>
         <Button 
           onClick={onToggleActive}
           variant={isActive ? "destructive" : "default"}
