@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import NavBar from "@/components/NavBar";
 import DeviceCard from "@/components/DeviceCard";
-import { getDevices, createDevice, toggleDevice, Device, updateDeviceUrl } from "@/api/devices";
+import { getDevices, createDevice, toggleDevice, Device, updateDeviceUrl, updateDeviceName } from "@/api/devices";
 import { getMe } from "@/api/auth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 
@@ -23,13 +23,13 @@ const Dashboard = () => {
         title: "Device Connected",
         description: `Device ${message.deviceId} connected`,
       });
-    } 
+    }
     else if (message.type === 'device_update') {
       try {
         // Fetch fresh device data from the database
         const updatedDevices = await getDevices(token);
         setDevices(updatedDevices);
-        
+
         // Show appropriate toast message based on the action
         if (message.action === 'created') {
           toast({
@@ -116,12 +116,12 @@ const Dashboard = () => {
 
     try {
       // await toggleDevice(deviceId, token);
-      setDevices(devices.map(device => 
-        device.device_id === deviceId 
+      setDevices(devices.map(device =>
+        device.device_id === deviceId
           ? { ...device, is_active: !device.is_active }
           : device
       ));
-      
+
       // Send WebSocket message about device state change
       sendMessage({
         type: 'lesson_state_change',
@@ -143,8 +143,8 @@ const Dashboard = () => {
 
     try {
       await updateDeviceUrl(deviceId, url, token);
-      setDevices(devices.map(device => 
-        device.device_id === deviceId 
+      setDevices(devices.map(device =>
+        device.device_id === deviceId
           ? { ...device, url }
           : device
       ));
@@ -161,10 +161,34 @@ const Dashboard = () => {
     }
   };
 
+  const handleUpdateName = async (deviceId: string, name: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      await updateDeviceName(deviceId, name, token);
+      setDevices(devices.map(device =>
+        device.device_id === deviceId
+          ? { ...device, name }
+          : device
+      ));
+      toast({
+        title: "Success",
+        description: "Device name updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to update Name",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar username={username} onLogout={handleLogout} />
-      
+
       <main className="container mx-auto py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Devices</h1>
@@ -175,12 +199,14 @@ const Dashboard = () => {
           {devices.map((device, id) => (
             <DeviceCard
               key={device.id}
-              deviceId={String(id+1)}
+              deviceId={device.device_id}
               isActive={device.is_active}
               status={device.status}
               url={device.url}
+              name={device.name}
               onToggleActive={() => handleToggleDevice(device.device_id)}
               onUpdateUrl={(url) => handleUpdateUrl(device.device_id, url)}
+              onUpdateName={(name) => handleUpdateName(device.device_id, name)}
             />
           ))}
         </div>

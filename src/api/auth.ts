@@ -12,7 +12,7 @@ export const signIn = async (data: SignInData): Promise<AuthResponse> => {
   const formData = new FormData();
   formData.append('username', data.username);
   formData.append('password', data.password);
-  
+
   const response = await axios.post(`${API_URL}/token`, formData);
   return response.data;
 };

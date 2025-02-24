@@ -8,6 +8,7 @@ export interface Device {
   is_active: boolean;
   status: 'online' | 'offline' | 'error' | 'maintenance';
   url?: string;
+  name?: string;
 }
 
 export const getDevices = async (token: string): Promise<Device[]> => {
@@ -20,7 +21,7 @@ export const getDevices = async (token: string): Promise<Device[]> => {
 };
 
 export const createDevice = async (deviceId: string, token: string): Promise<Device> => {
-  const response = await axios.post(API_URL, 
+  const response = await axios.post(API_URL,
     { device_id: deviceId },
     {
       headers: {
@@ -40,8 +41,20 @@ export const toggleDevice = async (deviceId: string, token: string): Promise<voi
 };
 
 export const updateDeviceUrl = async (deviceId: string, url: string, token: string): Promise<Device> => {
-  const response = await axios.put(`${API_URL}url/${deviceId}`, 
+  const response = await axios.put(`${API_URL}url/${deviceId}`,
     { url },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+  return response.data;
+};
+
+export const updateDeviceName = async (deviceId: string, name: string, token: string): Promise<Device> => {
+  const response = await axios.put(`${API_URL}name/${deviceId}`,
+    { name },
     {
       headers: {
         Authorization: `Bearer ${token}`
