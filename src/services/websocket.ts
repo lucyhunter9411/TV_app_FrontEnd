@@ -43,8 +43,20 @@ class WebSocketService {
     }
   }
 
-  addMessageHandler(handler: MessageHandler) {
-    this.messageHandlers.add(handler);
+  addMessageHandler(handler: unknown) {
+    if (typeof handler === "function") {
+      this.messageHandlers.add(handler as MessageHandler);
+    } else {
+      throw new Error("Invalid handler: must be a function");
+    }
+  }
+  
+  updateMessageHandler(id: string, newHandler: MessageHandler) {
+    if (this.messageHandlers.has(id)) {
+      this.messageHandlers.set(id, newHandler);
+    } else {
+      throw new Error(`Handler with id "${id}" does not exist.`);
+    }
   }
 
   removeMessageHandler(handler: MessageHandler) {
